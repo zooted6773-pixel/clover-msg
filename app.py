@@ -1,16 +1,734 @@
-import streamlit as st
-import streamlit.components.v1 as components
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>클로버 학원 문자 생성기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+KR:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
 
-# 페이지 설정 (넓게 보기)
-st.set_page_config(layout="wide", page_title="클로버 학원 문자 생성기")
+        .main-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 650px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        
+        /* 탭 스타일 */
+        .tabs { display: flex; background-color: #eee; border-bottom: 1px solid #ddd; }
+        .tab-button {
+            flex: 1; padding: 15px 5px; border: none; background: none;
+            cursor: pointer; font-size: 14px; font-weight: bold; color: #666;
+            transition: 0.2s;
+        }
+        .tab-button:hover { background-color: #e0e0e0; }
+        .tab-button.active {
+            background-color: white; color: #00994d;
+            border-top: 3px solid #00994d;
+        }
 
-# HTML 파일 읽기
-def load_html():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
+        .content { display: none; padding: 20px; }
+        .content.active { display: block; }
 
-# 앱 실행
-html_code = load_html()
+        /* [신규등록 탭] 전용 스타일 */
+        .reg-group { margin-bottom: 1rem; }
+        .reg-row { display: flex; gap: 10px; }
+        .reg-row .reg-group { flex: 1; }
+        .reg-label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #555; font-size: 0.9rem;}
+        .reg-input, .reg-select {
+            width: 100%; padding: 10px;
+            border: 1px solid #ddd; border-radius: 6px;
+            font-size: 15px; box-sizing: border-box;
+        }
+        .reg-price-info {
+            background: #fafafa; padding: 15px; border-radius: 6px;
+            border: 1px solid #eee; margin-bottom: 15px;
+        }
+        .reg-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 6px;
+            font-size: 16px; cursor: pointer; font-weight: bold; color: white;
+            background-color: #00994d; margin-top: 10px;
+        }
+        .reg-btn:hover { background-color: #007a3d; }
+        .reg-result {
+            width: 100%; height: 250px; resize: none;
+            margin-top: 15px; padding: 10px;
+            background-color: #f9f9f9; border: 1px solid #eee;
+            font-family: monospace; line-height: 1.4; font-size: 14px;
+        }
+        
+        /* [결석보강/전날안내] 스타일 */
+        .hidden-field { display: none; }
+        .calendar-inner-container { max-width: 280px; margin: 0 auto; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .calendar-day { 
+            width: 34px; height: 34px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; border-radius: 0.5rem; font-size: 0.8rem; 
+            transition: all 0.2s; position: relative; 
+        }
+        .calendar-day:hover { background-color: #f1f5f9; }
+        .calendar-day.selected { background-color: #4f46e5; color: white; font-weight: bold; }
+        .calendar-day.today { border: 1px solid #4f46e5; }
+        .calendar-day.other-month { color: #cbd5e1; }
+        .calendar-day.fri { color: #4f46e5; font-weight: 600; }
 
-# 화면에 표시 (height는 화면 길이에 맞춰 넉넉하게 1200으로 잡음)
-components.html(html_code, height=1200, scrolling=True)
+        /* 과목 선택 토글 */
+        .subject-toggle {
+            display: flex; gap: 10px; margin-bottom: 20px; background: #f0fdf4;
+            padding: 10px; border-radius: 8px; border: 1px solid #ccebd6;
+        }
+        .subject-toggle label {
+            flex: 1; text-align: center; cursor: pointer; margin: 0;
+            padding: 8px; border-radius: 6px; background: white; border: 1px solid #ddd;
+            color: #555;
+        }
+        .subject-toggle input[type="radio"] { display: none; }
+        .subject-toggle input[type="radio"]:checked + label {
+            background-color: #00994d; color: white; border-color: #00994d;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event, 'tab1')">신규등록</button>
+        <button class="tab-button" onclick="openTab(event, 'tab2')">결석보강</button>
+        <button class="tab-button" onclick="openTab(event, 'tab3')">방학특강</button>
+        <button class="tab-button" onclick="openTab(event, 'tab4')">전날안내</button>
+    </div>
+
+    <div id="tab1" class="content active">
+        <h3 class="text-lg font-bold text-gray-800 border-b-2 border-green-600 pb-2 mb-4 inline-block">🌱 신규 등록 안내</h3>
+        
+        <div class="subject-toggle">
+            <input type="radio" id="subSci" name="regSubject" value="science" checked onchange="toggleRegSubject()">
+            <label for="subSci">🧪 과학</label>
+            <input type="radio" id="subMath" name="regSubject" value="math" onchange="toggleRegSubject()">
+            <label for="subMath">📐 수학</label>
+        </div>
+
+        <div class="reg-row">
+            <div class="reg-group">
+                <label class="reg-label">학생 학년</label>
+                <select id="regGrade" class="reg-select">
+                    <option value="">선택</option>
+                    <option value="초2">초2</option><option value="초3">초3</option><option value="초4">초4</option><option value="초5">초5</option><option value="초6">초6</option>
+                    <option value="중1">중1</option><option value="중2">중2</option><option value="중3">중3</option>
+                </select>
+            </div>
+            <div class="reg-group" id="scienceClassGroup">
+                <label class="reg-label">과학 반 선택</label>
+                <select id="regClassSci" class="reg-select" onchange="updateScienceInfo()">
+                    <option value="">선택하세요</option>
+                    <optgroup label="과학 정규반"><option value="Beginning Class">Beginning Class</option><option value="Middle Class">Middle Class</option><option value="High Class">High Class</option><option value="Master Class">Master Class</option></optgroup>
+                    <optgroup label="심화/내신/하이탑"><option value="하이탑 Class">하이탑 Class</option><option value="하이탑 심화">하이탑 심화</option><option value="중1 심화">중1 심화</option><option value="중2 내신">중2 내신</option><option value="중3 내신">중3 내신</option></optgroup>
+                    <optgroup label="고등 과정"><option value="통합과학">통합과학</option><option value="물리1">물리1</option><option value="화학1">화학1</option></optgroup>
+                </select>
+            </div>
+            <div class="reg-group" id="mathDayGroup" style="display:none;">
+                <label class="reg-label">수학 요일</label>
+                <select id="regMathDays" class="reg-select" onchange="updateMathOptions()">
+                    <option value="mwf">월수금 (12회)</option><option value="tt">화목 (8회)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="reg-group" id="scienceTimeGroup">
+            <label class="reg-label">수업 시간 (과학)</label>
+            <select id="regScheduleSci" class="reg-select"><option value="">반을 먼저 선택해주세요</option></select>
+            <input type="text" id="regScheduleSciCustom" class="reg-input" placeholder="직접 입력" style="margin-top:5px; display:none;">
+        </div>
+
+        <div id="mathTimeGroup" style="display:none;">
+            <div class="reg-row">
+                <div class="reg-group"><label class="reg-label">시작 시간</label><select id="regMathStartTime" class="reg-select"></select></div>
+                <div class="reg-group"><label class="reg-label">수업 길이</label><select id="regMathDuration" class="reg-select"></select></div>
+            </div>
+        </div>
+
+        <div class="reg-row">
+            <div class="reg-group"><label class="reg-label">첫 수업일</label><input type="text" id="regFirstDate" class="reg-input" placeholder="예: 5월 9일(화)"></div>
+            <div class="reg-group"><label class="reg-label">첫 수업 시간</label><input type="text" id="regFirstTime" class="reg-input" placeholder="예: 5시"></div>
+        </div>
+
+        <div class="reg-price-info">
+            <div class="reg-row">
+                <div class="reg-group"><label class="reg-label">결제 구분</label><input type="text" id="paymentTerm" class="reg-input" placeholder="예: 4분기, 5월분"></div>
+                <div class="reg-group" id="monthInputGroup"><label class="reg-label">개월 수</label><input type="number" id="payMonths" class="reg-input" value="1" min="1"></div>
+            </div>
+            <div class="reg-row">
+                <div class="reg-group">
+                    <label class="reg-label">월 수업료</label>
+                    <input type="text" id="regTuition" class="reg-input" placeholder="금액" style="display:block;">
+                    <select id="regMathTuition" class="reg-select" style="display:none;" onchange="calcDailyMath()">
+                        <option value="300000">300,000원</option><option value="380000">380,000원</option><option value="420000">420,000원</option><option value="480000">480,000원</option><option value="525000">525,000원</option>
+                    </select>
+                </div>
+                <div class="reg-group"><label class="reg-label">교재비</label><input type="text" id="regBookFee" class="reg-input" placeholder="0"></div>
+            </div>
+            <div id="mathDailyOption" style="display:none; margin-top:10px;">
+                <label style="display:flex; align-items:center; cursor:pointer;"><input type="checkbox" id="checkDailyCalc" onchange="toggleDailyCalc()"> <span style="margin-left:5px; font-weight:bold; font-size:14px;">📅 중간 등록 (횟수별 계산)</span></label>
+                <div id="dailyCalcBox" style="display:none; background:#fff9c4; padding:10px; border-radius:6px; margin-top:5px; border:1px solid #fbc02d;">
+                    <div class="reg-row">
+                        <div class="reg-group"><label class="reg-label">기준 횟수</label><input type="text" id="dailyTotalCount" class="reg-input" value="12" readonly style="background:#eee;"></div>
+                        <div class="reg-group"><label class="reg-label">등록 횟수</label><input type="number" id="dailyInputCount" class="reg-input" placeholder="예: 7" oninput="calcDailyMath()"></div>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; color:#d32f2f; margin-top:5px;">계산액: <span id="dailyResultPrice">0</span>원</div>
+                </div>
+            </div>
+        </div>
+        <button class="reg-btn" onclick="generateRegMsg()">문자 생성하기</button>
+        <textarea id="result1" class="reg-result" readonly></textarea>
+    </div>
+
+    <div id="tab2" class="content">
+        <div class="bg-indigo-900 p-4 text-white text-center rounded-t-lg -mx-5 -mt-5 mb-5">
+            <h1 class="text-xl font-bold flex justify-center items-center gap-2"><span>🧪</span> 클로버 학원 결석 알림</h1>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-6 justify-center">
+            <label class="cursor-pointer"><input type="radio" name="absSubject" value="science_elem" class="peer hidden" checked onchange="toggleAbsSubject()"><div class="px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-600 font-bold transition-all text-sm">과학(초등)</div></label>
+            <label class="cursor-pointer"><input type="radio" name="absSubject" value="science_mid" class="peer hidden" onchange="toggleAbsSubject()"><div class="px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-600 font-bold transition-all text-sm">과학(중등)</div></label>
+            <label class="cursor-pointer"><input type="radio" name="absSubject" value="math" class="peer hidden" onchange="toggleAbsSubject()"><div class="px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 peer-checked:border-red-600 peer-checked:bg-red-50 peer-checked:text-red-600 font-bold transition-all text-sm">수학</div></label>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">이름</label><input type="text" id="absName" placeholder="학생 이름" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none text-sm"></div>
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">학년</label><select id="absGrade" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none text-sm"></select></div>
+            
+            <div id="sci-elem-box" class="space-y-1 md:col-span-2">
+                <label class="text-xs font-bold text-slate-500 ml-1">수업반 (과학 초등)</label>
+                <select id="sciElemClass" class="w-full px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg outline-none text-sm">
+                    <option value="">수업반 선택</option>
+                    <optgroup label="Beginning"><option value="Beginning Class (수요일 3:00~4:30)">Beginning (수 3:00~4:30)</option><option value="Beginning Class (목요일 3:00~4:30)">Beginning (목 3:00~4:30)</option></optgroup>
+                    <optgroup label="Middle Class"><option value="Middle Class (수요일 5:00~6:50)">Middle (수 5:00~6:50)</option><option value="Middle Class (금요일 5:00~6:50)">Middle (금 5:00~6:50)</option></optgroup>
+                    <optgroup label="High Class"><option value="High Class (금요일 3:00~4:50)">High (금 3:00~4:50)</option><option value="High Class (토요일 1:00~2:50)">High (토 1:00~2:50)</option></optgroup>
+                    <optgroup label="Master Class"><option value="Master Class (금요일 5:00~7:20)">Master (금 5:00~7:20)</option><option value="Master Class (금요일 7:40~10:00)">Master (금 7:40~10:00)</option><option value="Master Class (토요일 10:00~12:20)">Master (토 10:00~12:20)</option></optgroup>
+                </select>
+            </div>
+            
+            <div id="sci-mid-box" class="space-y-1 md:col-span-2 hidden-field">
+                <label class="text-xs font-bold text-slate-500 ml-1">수업반 (과학 중등)</label>
+                <select id="sciMidClass" class="w-full px-4 py-2.5 bg-indigo-50 border border-indigo-100 rounded-lg outline-none text-sm">
+                    <option value="">수업반 선택</option>
+                    <optgroup label="하이탑">
+                        <option value="하이탑 (월 5:00~7:20)">하이탑 (월 5:00~7:20)</option>
+                        <option value="하이탑 (목 7:40~10:00)">하이탑 (목 7:40~10:00)</option>
+                        <option value="하이탑 (토 10:00~12:20)">하이탑 (토 10:00~12:20)</option>
+                    </optgroup>
+                    <optgroup label="하이탑 심화">
+                        <option value="하이탑 심화 (수 5:00~7:20)">하이탑 심화 (수 5:00~7:20)</option>
+                        <option value="하이탑 심화 (금 7:40~10:00)">하이탑 심화 (금 7:40~10:00)</option>
+                    </optgroup>
+                    <optgroup label="중등 심화/내신">
+                        <option value="중1 심화 (목 5:00~7:20)">중1 심화 (목 5:00~7:20)</option>
+                        <option value="중1 심화 (토 1:00~3:20)">중1 심화 (토 1:00~3:20)</option>
+                        <option value="중2 내신 (목 7:40~10:00)">중2 내신 (목 7:40~10:00)</option>
+                        <option value="중2 내신 (토 10:00~12:20)">중2 내신 (토 10:00~12:20)</option>
+                        <option value="중3 내신 (토 16:00~18:20)">중3 내신 (토 4:00~6:20)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div id="math-class-box" class="space-y-1 md:col-span-2 hidden-field"><select id="mathSchedule" class="w-full px-4 py-2.5 bg-red-50 border border-red-100 rounded-lg outline-none text-sm"><option value="">선택</option><option value="월수금 3시">월수금 3시</option><option value="월수금 5시">월수금 5시</option><option value="월수금 7시 40분">월수금 7시 40분</option><option value="화목 3시">화목 3시</option><option value="화목 6시">화목 6시</option><option value="토요일 10시">토요일 10시</option><option value="토요일 2시">토요일 2시</option></select></div>
+            
+            <div class="md:col-span-2" id="sci-teacher-box"><select id="sciTeacher" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm"><option value="오승준">오승준 선생님</option><option value="서은혜">서은혜 선생님</option><option value="유지연">유지연 선생님</option><option value="김반석">김반석 선생님</option></select></div>
+            
+            <div class="md:col-span-2 hidden-field" id="math-teacher-box">
+                <select id="mathTeacher" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm">
+                    <option value="한인탁">한인탁 선생님</option>
+                    <option value="이승은">이승은 선생님</option>
+                    <option value="김지연">김지연 선생님</option>
+                    <option value="김성욱">김성욱 선생님</option>
+                    <option value="홍명기">홍명기 선생님</option>
+                    <option value="이준희">이준희 선생님</option>
+                    <option value="김경선">김경선 선생님</option>
+                </select>
+            </div>
+            
+            <div class="md:col-span-2 space-y-2"><div class="bg-slate-50 border border-slate-200 rounded-xl p-4"><div class="calendar-inner-container"><div class="flex justify-between items-center mb-3 px-1"><button onclick="changeMonth(-1)" class="text-xs w-8 h-8 rounded-full">◀</button><h3 id="calendarTitle" class="font-bold text-sm">2026년 1월</h3><button onclick="changeMonth(1)" class="text-xs w-8 h-8 rounded-full">▶</button></div><div class="calendar-grid" id="calendarDays"></div></div></div></div>
+            <div class="md:col-span-2 space-y-1"><div id="selectedDatesDisplay" class="p-3 bg-slate-100 border border-slate-200 rounded-lg text-xs min-h-[44px] flex flex-wrap gap-2"></div></div>
+            <div class="md:col-span-2 space-y-1"><div class="grid grid-cols-2 gap-3"><select id="reason" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"><option value="개인사유">개인사유</option><option value="병결">병결</option><option value="학교 행사">학교 행사</option><option value="가족 여행">가족 여행</option></select><select id="note" class="px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-lg text-sm outline-none"><option value="보강 연락 부탁드립니다.">보강 연락 부탁드립니다.</option></select></div></div>
+        </div>
+        <button onclick="generateAbsenceMsg()" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg transition-all mb-6 text-sm">결석 양식 생성하기</button>
+        <div class="mt-4 border-t pt-6"><div id="output" class="p-5 bg-slate-50 border border-slate-200 rounded-xl whitespace-pre-wrap text-slate-800 text-sm font-medium leading-relaxed min-h-[120px]"></div></div>
+    </div>
+
+    <div id="tab3" class="content"><h3>🌟 방학 특강 안내</h3><p>준비중입니다.</p></div>
+
+    <div id="tab4" class="content">
+        <h3 class="text-lg font-bold text-gray-800 border-b-2 border-orange-500 pb-2 mb-4 inline-block">⏰ 수업 전날 안내</h3>
+
+        <div class="subject-toggle">
+            <input type="radio" id="preSci" name="preSubject" value="과학" checked onchange="updatePreTimeOptions()">
+            <label for="preSci">🧪 과학</label>
+            <input type="radio" id="preMath" name="preSubject" value="수학" onchange="updatePreTimeOptions()">
+            <label for="preMath">📐 수학</label>
+        </div>
+
+        <div class="reg-group">
+            <label class="reg-label">날짜 선택 (요일별 시간 자동 변경)</label>
+            <input type="date" id="preDate" class="reg-input" onchange="updatePreTimeOptions()">
+        </div>
+
+        <div class="reg-row">
+            <div class="reg-group">
+                <label class="reg-label">수업 시간</label>
+                <select id="preTime" class="reg-select">
+                    </select>
+            </div>
+            <div class="reg-group">
+                <label class="reg-label">교실 (2층)</label>
+                <select id="preRoom" class="reg-select">
+                    <option value="1번 교실">1번 교실</option>
+                    <option value="2번 교실">2번 교실</option>
+                    <option value="3번 교실">3번 교실</option>
+                    <option value="4번 교실">4번 교실</option>
+                    <option value="5번 교실">5번 교실</option>
+                    <option value="6번 교실">6번 교실</option>
+                    <option value="7번 교실">7번 교실</option>
+                    <option value="8번 교실">8번 교실</option>
+                    <option value="9번 교실">9번 교실</option>
+                    <option value="10번 교실">10번 교실</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="reg-btn" style="background-color: #f97316;" onclick="generatePreMsg()">문자 생성하기</button>
+        <textarea id="result4" class="reg-result" readonly></textarea>
+        <button onclick="copyPreMsg()" class="w-full mt-2 py-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">📋 복사하기</button>
+    </div>
+</div>
+
+<script>
+    /* ================= TAB 1 & COMMON ================= */
+    const sciClassData = {
+        "Beginning Class": { price: 170000, book: 20000, times: ["수요일 3:00~4:30", "목요일 3:00~4:30"] },
+        "Middle Class": { price: 180000, book: 20000, times: ["수요일 5:00~6:50", "금요일 5:00~6:50"] },
+        "High Class": { price: 180000, book: 20000, times: ["금요일 3:00~4:50", "토요일 1:00~2:50"] },
+        "Master Class": { price: 200000, book: 20000, times: ["금요일 5:00~7:20 / 7:40~10:00", "토요일 10:00~12:20"] },
+        "하이탑 Class": { price: 250000, book: 0, times: ["월 5:00~7:20", "목 7:40~10:00", "토 10:00~12:20"] },
+        "하이탑 심화": { price: 250000, book: 0, times: ["수 5:00~7:20", "금 7:40~10:00"] },
+        "중1 심화": { price: 250000, book: 0, times: ["목 5:00~7:20", "토 1:00~3:20"] },
+        "중2 내신": { price: 250000, book: 0, times: ["목 7:40~10:00", "토 10:00~12:20"] },
+        "중3 내신": { price: 250000, book: 0, times: ["토 16:00~18:20"] },
+        "통합과학": { price: 280000, book: 0, times: ["시간표 미정"] },
+        "물리1": { price: 280000, book: 0, times: ["시간표 미정"] },
+        "화학1": { price: 280000, book: 0, times: ["시간표 미정"] }
+    };
+
+    function toggleRegSubject() {
+        const isMath = document.getElementById("subMath").checked;
+        document.getElementById("scienceClassGroup").style.display = isMath ? 'none' : 'block';
+        document.getElementById("mathDayGroup").style.display = isMath ? 'block' : 'none';
+        document.getElementById("scienceTimeGroup").style.display = isMath ? 'none' : 'block';
+        document.getElementById("mathTimeGroup").style.display = isMath ? 'block' : 'none';
+        document.getElementById("mathDailyOption").style.display = isMath ? 'block' : 'none';
+
+        const sciTuition = document.getElementById("regTuition");
+        const mathTuition = document.getElementById("regMathTuition");
+        if (isMath) {
+            sciTuition.style.display = 'none'; mathTuition.style.display = 'block';
+            updateMathOptions(); document.getElementById("regBookFee").value = "0"; 
+            document.getElementById("checkDailyCalc").checked = false; toggleDailyCalc();
+        } else {
+            sciTuition.style.display = 'block'; mathTuition.style.display = 'none';
+        }
+    }
+
+    function updateScienceInfo() {
+        const className = document.getElementById("regClassSci").value;
+        const scheduleSelect = document.getElementById("regScheduleSci");
+        const customInput = document.getElementById("regScheduleSciCustom");
+        const tuitionInput = document.getElementById("regTuition");
+        const bookFeeInput = document.getElementById("regBookFee");
+        scheduleSelect.innerHTML = ""; 
+        if (sciClassData[className]) {
+            const data = sciClassData[className];
+            tuitionInput.value = data.price; bookFeeInput.value = data.book;
+            data.times.forEach(time => scheduleSelect.add(new Option(time, time)));
+            scheduleSelect.add(new Option("직접 입력", "custom"));
+            customInput.style.display = "none";
+        } else {
+            tuitionInput.value = ""; bookFeeInput.value = ""; customInput.style.display = "none";
+        }
+    }
+    document.getElementById("regScheduleSci").addEventListener("change", function() {
+        document.getElementById("regScheduleSciCustom").style.display = this.value === "custom" ? "block" : "none";
+    });
+
+    function updateMathOptions() {
+        const days = document.getElementById("regMathDays").value; 
+        const timeSelect = document.getElementById("regMathStartTime");
+        const durSelect = document.getElementById("regMathDuration");
+        const dailyTotal = document.getElementById("dailyTotalCount");
+        timeSelect.innerHTML = ""; durSelect.innerHTML = "";
+        if (days === 'mwf') {
+            ["3:00", "5:00", "7:40"].forEach(t => timeSelect.add(new Option(t, t)));
+            durSelect.add(new Option("1시간 50분", "110")); durSelect.add(new Option("2시간 20분", "140"));
+            dailyTotal.value = 12; 
+        } else {
+            ["3:00", "6:00"].forEach(t => timeSelect.add(new Option(t, t)));
+            durSelect.add(new Option("2시간 45분", "165")); durSelect.add(new Option("3시간 30분", "210"));
+            dailyTotal.value = 8;
+        }
+        calcDailyMath();
+    }
+
+    function toggleDailyCalc() {
+        const isChecked = document.getElementById("checkDailyCalc").checked;
+        document.getElementById("dailyCalcBox").style.display = isChecked ? "block" : "none";
+        document.getElementById("monthInputGroup").style.opacity = isChecked ? "0.3" : "1";
+        document.getElementById("payMonths").disabled = isChecked;
+        calcDailyMath();
+    }
+
+    function calcDailyMath() {
+        if (!document.getElementById("checkDailyCalc").checked) return;
+        const basePrice = parseInt(document.getElementById("regMathTuition").value);
+        const totalCount = parseInt(document.getElementById("dailyTotalCount").value);
+        const inputCount = parseInt(document.getElementById("dailyInputCount").value) || 0;
+        if (totalCount > 0 && inputCount > 0) {
+            let result = (basePrice / totalCount) * inputCount;
+            result = Math.round(result / 10) * 10;
+            document.getElementById("dailyResultPrice").innerText = result.toLocaleString();
+        } else {
+            document.getElementById("dailyResultPrice").innerText = "0";
+        }
+    }
+
+    function generateRegMsg() {
+        const isMath = document.getElementById("subMath").checked;
+        const subjectName = isMath ? "수학" : "과학";
+        let finalClassName = "", finalSchedule = "", finalTuition = 0;
+        let isDailyMath = false, dailyCount = 0;
+
+        if (isMath) {
+            finalClassName = "정규반";
+            const daysStr = document.getElementById("regMathDays").value === 'mwf' ? "월수금" : "화목";
+            const startT = document.getElementById("regMathStartTime").value;
+            const durMin = document.getElementById("regMathDuration").value;
+            let parts = startT.split(":");
+            let hour = parseInt(parts[0]); if(hour < 12) hour += 12;
+            let totalMin = hour * 60 + parseInt(parts[1]) + parseInt(durMin);
+            let endH = Math.floor(totalMin/60); if(endH > 12) endH -= 12;
+            let endM = totalMin%60; if(endM===0) endM="00";
+            finalSchedule = `${daysStr} ${startT}~${endH}:${endM}`;
+
+            isDailyMath = document.getElementById("checkDailyCalc").checked;
+            if (isDailyMath) {
+                finalTuition = parseInt(document.getElementById("dailyResultPrice").innerText.replace(/,/g, '')) || 0;
+                dailyCount = document.getElementById("dailyInputCount").value;
+            } else {
+                finalTuition = parseInt(document.getElementById("regMathTuition").value);
+            }
+        } else {
+            finalClassName = document.getElementById("regClassSci").value;
+            if (!finalClassName) { alert("반을 선택해주세요."); return; }
+            finalSchedule = document.getElementById("regScheduleSci").value;
+            if (finalSchedule === "custom") finalSchedule = document.getElementById("regScheduleSciCustom").value;
+            finalTuition = parseInt(document.getElementById("regTuition").value) || 0;
+        }
+
+        const firstDate = document.getElementById("regFirstDate").value;
+        const firstTime = document.getElementById("regFirstTime").value;
+        const paymentTerm = document.getElementById("paymentTerm").value.trim();
+        const months = parseInt(document.getElementById("payMonths").value) || 1;
+        const bookFee = parseInt(document.getElementById("regBookFee").value) || 0;
+        let totalSum = 0, priceBlock = "";
+
+        if (isMath && isDailyMath) {
+            totalSum = finalTuition + bookFee;
+            priceBlock = `총 교육비 : ${totalSum.toLocaleString()}원\n*상세내역\n교육비(수업료 ${dailyCount}회) : ${finalTuition.toLocaleString()}원`;
+        } else {
+            const totalTuition = finalTuition * months;
+            totalSum = totalTuition + bookFee;
+            priceBlock = `총 교육비 : ${totalSum.toLocaleString()}원\n*상세내역\n`;
+            priceBlock += months > 1 ? `교육비(수업료 ${months}개월) : ${totalTuition.toLocaleString()}원` : `교육비(수업료) : ${totalTuition.toLocaleString()}원`;
+        }
+        if (bookFee > 0) priceBlock += `\n교재비 : ${bookFee.toLocaleString()}원`;
+        let termDisplay = paymentTerm !== "" ? `[${paymentTerm}]\n` : "";
+
+        const msg = `<클로버 ${subjectName} - ${finalClassName} 등록안내>
+
+수업요일 및 시간: ${finalSchedule}
+첫 수업일: ${firstDate} ${firstTime}
+
+${termDisplay}${priceBlock}
+
+접수 후 48시간 내 미납부 시 자동취소 됩니다.
+
+<클로버 입회 안내>
+아래 링크를 꼭 확인해주세요
+https://cafe.naver.com/songdoclover/764
+
+<달라진 클로버 초등 과학 테스트 분석표>
+https://cafe.naver.com/songdoclover/468
+
+결제는 분기 혹은 월 납부로 선택 가능합니다.
+1분기 - 1,2,3월
+2분기 - 4,5,6월
+3분기 - 7,8,9월
+4분기 - 10,11,12월
+
+개인사정에 의한 결석은 개별보강 불가한 점 양해 부탁드리겠습니다.
+
+아이들 등원시 개인 필기도구와 텀블러를 준비해주세요.
+
+원내에는 환경보호를 위해 종이컵이 비치되어 있지 않습니다.
+
+*방문납부, 계좌이체, 온라인결제 가능합니다.
+
+1. 방문 납부 가능 시간
+평일 2시 ~ 9시30분
+토요일 9시30분~4시30분
+
+2. 신한은행 계좌이체 
+이체시 입금명은 학교+아이이름으로 부탁드립니다.
+ex. 초은초김영수신한 
+[수업료]
+신한 법인 140-015-126016
+클로버 수학과학 학원 임현정
+
+[교재비]
+신한 110-543-841235
+최은옥(클로버미래인재연구소)
+
+3. 통통통 앱 결제가 가능합니다.
+-학원번호로 발송드린 [통통통Edu 회원가입 안내] 문자를 통해 앱을 깔아주시면 카드사 상관없이 결제 가능
+-앱 설치 문자 재발송은 원으로 문의주세요.
+
+-클로버 학원-`;
+        document.getElementById("result1").value = msg;
+    }
+
+
+    /* ================= TAB 2: 결석보강 ================= */
+    const elemGrades = ["초2", "초3", "초4", "초5", "초6"];
+    const midGrades = ["중1", "중2", "중3"];
+    let selectedDates = [];
+    let currentViewDate = new Date();
+
+    function updateAbsGradeOptions() {
+        const subject = document.querySelector('input[name="absSubject"]:checked').value;
+        const gradeSelect = document.getElementById('absGrade');
+        let options = '<option value="">학년 선택</option>';
+        let target = (subject === 'science_elem') ? elemGrades : (subject === 'science_mid' ? midGrades : [...elemGrades, ...midGrades]);
+        target.forEach(g => options += `<option value="${g}">${g}</option>`);
+        gradeSelect.innerHTML = options;
+    }
+
+    function toggleAbsSubject() {
+        const sub = document.querySelector('input[name="absSubject"]:checked').value;
+        ['sci-elem-box', 'sci-mid-box', 'math-class-box', 'sci-teacher-box', 'math-teacher-box'].forEach(id => {
+            document.getElementById(id).classList.add('hidden-field');
+        });
+        if (sub === 'science_elem') { 
+            document.getElementById('sci-elem-box').classList.remove('hidden-field'); 
+            document.getElementById('sci-teacher-box').classList.remove('hidden-field'); 
+        } else if (sub === 'science_mid') { 
+            document.getElementById('sci-mid-box').classList.remove('hidden-field'); 
+            document.getElementById('sci-teacher-box').classList.remove('hidden-field'); 
+        } else { 
+            document.getElementById('math-class-box').classList.remove('hidden-field'); 
+            document.getElementById('math-teacher-box').classList.remove('hidden-field'); 
+        }
+        updateAbsGradeOptions();
+    }
+
+    function renderCalendar() {
+        const year = currentViewDate.getFullYear();
+        const month = currentViewDate.getMonth();
+        document.getElementById('calendarTitle').innerText = `${year}년 ${month + 1}월`;
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        const prevLastDate = new Date(year, month, 0).getDate();
+        let daysHtml = '';
+        for (let i = firstDay; i > 0; i--) daysHtml += `<div class="calendar-day other-month">${prevLastDate - i + 1}</div>`;
+        for (let i = 1; i <= lastDate; i++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const dateObj = new Date(dateStr);
+            const isSelected = selectedDates.includes(dateStr) ? 'selected' : '';
+            const isToday = new Date().toISOString().split('T')[0] === dateStr ? 'today' : '';
+            const isFri = dateObj.getDay() === 5 ? 'fri' : '';
+            daysHtml += `<div class="calendar-day ${isSelected} ${isToday} ${isFri}" onclick="toggleDate('${dateStr}')">${i}</div>`;
+        }
+        document.getElementById('calendarDays').innerHTML = daysHtml;
+    }
+
+    function toggleDate(dateStr) {
+        const index = selectedDates.indexOf(dateStr);
+        if (index > -1) selectedDates.splice(index, 1);
+        else { selectedDates.push(dateStr); selectedDates.sort(); }
+        updateDateDisplay();
+        renderCalendar();
+    }
+
+    function updateDateDisplay() {
+        const display = document.getElementById('selectedDatesDisplay');
+        if (selectedDates.length === 0) { display.innerHTML = '<span class="text-slate-400 italic">달력에서 날짜를 클릭하세요.</span>'; return; }
+        display.innerHTML = selectedDates.map(d => `<span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold border border-indigo-200">${getAcademicWeek(d)}</span>`).join('');
+    }
+
+    function changeMonth(delta) {
+        currentViewDate.setMonth(currentViewDate.getMonth() + delta);
+        renderCalendar();
+    }
+
+    function getAcademicWeek(dateStr) {
+        const d = new Date(dateStr);
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const weekDay = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+        let firstFriday = 1;
+        while (new Date(d.getFullYear(), d.getMonth(), firstFriday).getDay() !== 5) firstFriday++;
+        let countFridays = 0;
+        for (let i = 1; i <= day; i++) if (new Date(d.getFullYear(), d.getMonth(), i).getDay() === 5) countFridays++;
+        const finalWeek = (day < firstFriday) ? 1 : countFridays + (firstFriday === 1 ? 0 : 1);
+        return `${m}/${day}(${weekDay}) ${finalWeek}주차`;
+    }
+
+    function generateAbsenceMsg() {
+        const sub = document.querySelector('input[name="absSubject"]:checked').value;
+        const name = document.getElementById('absName').value || '(이름)';
+        const grade = document.getElementById('absGrade').value || '(학년)';
+        const reason = document.getElementById('reason').value;
+        const note = document.getElementById('note').value;
+        const dateList = selectedDates.map(d => getAcademicWeek(d)).join(', ');
+        const finalDates = dateList || '(날짜 선택 필요)';
+        const b = "•";
+        let message = "";
+        
+        if (sub.startsWith('science')) {
+            const cls = (sub === 'science_elem' ? document.getElementById('sciElemClass').value : document.getElementById('sciMidClass').value) || '(수업반 미선택)';
+            const t = document.getElementById('sciTeacher').value;
+            message = `과학)\n${b} 이름 : ${name}\n${b} 학년 : ${grade}\n${b} 수업반 : ${cls}\n${b} 담당 선생님 : ${t}\n${b} 결석일 : ${finalDates}\n${b} 사유 : ${reason}\n${b} 특이사항 : ${note}`;
+        } else {
+            const sch = document.getElementById('mathSchedule').value || '(시간표 미선택)';
+            const t = document.getElementById('mathTeacher').value;
+            message = `수학)\n${b} 이름 : ${name}\n${b} 학년 : ${grade}\n${b} 수업 요일 및 시간 : ${sch}\n${b} 담당 선생님 : ${t}\n${b} 결석일 : ${finalDates}\n${b} 사유 : ${reason}\n${b} 특이사항 : ${note}`;
+        }
+        document.getElementById('output').innerText = message;
+    }
+
+    function copyContent() {
+        const text = document.getElementById('output').innerText;
+        if (text.includes('표시됩니다')) return;
+        const el = document.createElement('textarea');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("복사 완료!");
+    }
+
+    /* ================= TAB 4: 전날 안내 로직 ================= */
+    function updatePreTimeOptions() {
+        const dateVal = document.getElementById('preDate').value;
+        if (!dateVal) return;
+
+        const d = new Date(dateVal);
+        const day = d.getDay(); // 0:일, 1:월, ..., 6:토
+        const sub = document.querySelector('input[name="preSubject"]:checked').value;
+        const select = document.getElementById('preTime');
+        select.innerHTML = "";
+        
+        let times = [];
+        
+        if (sub === "과학") {
+            if (day === 6) { // 토요일
+                times = ["10시", "1시", "4시"];
+            } else { // 평일 (일요일 포함/기본)
+                times = ["3시", "5시", "7시 40분"];
+            }
+        } else { // 수학
+            if (day === 1 || day === 3 || day === 5) { // 월, 수, 금
+                times = ["3시", "5시", "7시 40분"];
+            } else if (day === 2 || day === 4) { // 화, 목
+                times = ["3시", "6시"];
+            } else if (day === 6) { // 토요일
+                times = ["10시", "14시"];
+            } else {
+                // 일요일 등 예외
+                times = ["3시", "5시", "6시", "7시 40분"]; 
+            }
+        }
+        
+        times.forEach(t => select.add(new Option(t, t)));
+    }
+
+    function generatePreMsg() {
+        const dateVal = document.getElementById('preDate').value;
+        if (!dateVal) { alert("날짜를 선택해주세요"); return; }
+        
+        const d = new Date(dateVal);
+        const day = d.getDate();
+        const weekDay = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+        const dateStr = `${day}일(${weekDay})`;
+
+        const time = document.getElementById('preTime').value;
+        const subject = document.querySelector('input[name="preSubject"]:checked').value;
+        const room = document.getElementById('preRoom').value;
+
+        const msg = `${dateStr} ${time} ${subject} 수업입니다.\n필기도구 지참 후 2층 ${room}로 보내주세요.\n감사합니다.`;
+        document.getElementById("result4").value = msg;
+    }
+
+    function copyPreMsg() {
+        const copyText = document.getElementById("result4");
+        copyText.select();
+        document.execCommand("copy");
+        alert("복사 완료!");
+    }
+
+    /* ================= 공통: 탭 전환 ================= */
+    function openTab(evt, tabName) {
+        var i, content, tablinks;
+        content = document.getElementsByClassName("content");
+        for (i = 0; i < content.length; i++) {
+            content[i].style.display = "none";
+            content[i].classList.remove("active");
+        }
+        tablinks = document.getElementsByClassName("tab-button");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.className += " active";
+    }
+
+    // 초기화
+    window.onload = function() {
+        toggleRegSubject();   
+        toggleAbsSubject();   
+        renderCalendar();
+        
+        // 전날안내 탭 날짜 기본값 (내일)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const yyyy = tomorrow.getFullYear();
+        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const dd = String(tomorrow.getDate()).padStart(2, '0');
+        document.getElementById('preDate').value = `${yyyy}-${mm}-${dd}`;
+        
+        updatePreTimeOptions(); // 초기 시간 설정
+    };
+</script>
+
+</body>
+</html>
