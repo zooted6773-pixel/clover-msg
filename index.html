@@ -244,8 +244,21 @@
             </div>
 
             <div id="math-class-box" class="space-y-1 md:col-span-2 hidden-field"><select id="mathSchedule" class="w-full px-4 py-2.5 bg-red-50 border border-red-100 rounded-lg outline-none text-sm"><option value="">선택</option><option value="월수금 3시">월수금 3시</option><option value="월수금 5시">월수금 5시</option><option value="월수금 7시 40분">월수금 7시 40분</option><option value="화목 3시">화목 3시</option><option value="화목 6시">화목 6시</option><option value="토요일 10시">토요일 10시</option><option value="토요일 2시">토요일 2시</option></select></div>
+            
             <div class="md:col-span-2" id="sci-teacher-box"><select id="sciTeacher" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm"><option value="오승준">오승준 선생님</option><option value="서은혜">서은혜 선생님</option><option value="유지연">유지연 선생님</option><option value="김반석">김반석 선생님</option></select></div>
-            <div class="md:col-span-2 hidden-field" id="math-teacher-box"><select id="mathTeacher" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm"><option value="한인탁">한인탁 선생님</option></select></div>
+            
+            <div class="md:col-span-2 hidden-field" id="math-teacher-box">
+                <select id="mathTeacher" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm">
+                    <option value="한인탁">한인탁 선생님</option>
+                    <option value="이승은">이승은 선생님</option>
+                    <option value="김지연">김지연 선생님</option>
+                    <option value="김성욱">김성욱 선생님</option>
+                    <option value="홍명기">홍명기 선생님</option>
+                    <option value="이준희">이준희 선생님</option>
+                    <option value="김경선">김경선 선생님</option>
+                </select>
+            </div>
+            
             <div class="md:col-span-2 space-y-2"><div class="bg-slate-50 border border-slate-200 rounded-xl p-4"><div class="calendar-inner-container"><div class="flex justify-between items-center mb-3 px-1"><button onclick="changeMonth(-1)" class="text-xs w-8 h-8 rounded-full">◀</button><h3 id="calendarTitle" class="font-bold text-sm">2026년 1월</h3><button onclick="changeMonth(1)" class="text-xs w-8 h-8 rounded-full">▶</button></div><div class="calendar-grid" id="calendarDays"></div></div></div></div>
             <div class="md:col-span-2 space-y-1"><div id="selectedDatesDisplay" class="p-3 bg-slate-100 border border-slate-200 rounded-lg text-xs min-h-[44px] flex flex-wrap gap-2"></div></div>
             <div class="md:col-span-2 space-y-1"><div class="grid grid-cols-2 gap-3"><select id="reason" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"><option value="개인사유">개인사유</option><option value="병결">병결</option><option value="학교 행사">학교 행사</option><option value="가족 여행">가족 여행</option></select><select id="note" class="px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-lg text-sm outline-none"><option value="보강 연락 부탁드립니다.">보강 연락 부탁드립니다.</option></select></div></div>
