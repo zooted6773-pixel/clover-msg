@@ -149,7 +149,9 @@
             <div class="reg-group" id="mathDayGroup" style="display:none;">
                 <label class="reg-label">수학 요일</label>
                 <select id="regMathDays" class="reg-select" onchange="updateMathOptions()">
-                    <option value="mwf">월수금 (12회)</option><option value="tt">화목 (8회)</option>
+                    <option value="mwf">월수금 (12회)</option>
+                    <option value="mw">월수 (8회)</option>
+                    <option value="tt">화목 (8회)</option>
                 </select>
             </div>
         </div>
@@ -400,9 +402,13 @@
             ["3:00", "5:00", "7:40"].forEach(t => timeSelect.add(new Option(t, t)));
             durSelect.add(new Option("1시간 50분", "110")); durSelect.add(new Option("2시간 20분", "140"));
             dailyTotal.value = 12; 
+        } else if (days === 'mw') {
+            ["3:00", "5:00", "7:40"].forEach(t => timeSelect.add(new Option(t, t)));
+            durSelect.add(new Option("1시간 50분", "110")); durSelect.add(new Option("2시간 20분", "140"));
+            dailyTotal.value = 8;
         } else {
             ["3:00", "6:00"].forEach(t => timeSelect.add(new Option(t, t)));
-            durSelect.add(new Option("2시간 45분", "165")); durSelect.add(new Option("3시간 30분", "210"));
+            durSelect.add(new Option("1시간 50분", "110")); durSelect.add(new Option("2시간 45분", "165")); durSelect.add(new Option("3시간 30분", "210"));
             dailyTotal.value = 8;
         }
         calcDailyMath();
@@ -438,7 +444,11 @@
 
         if (isMath) {
             finalClassName = "정규반";
-            const daysStr = document.getElementById("regMathDays").value === 'mwf' ? "월수금" : "화목";
+            const daysVal = document.getElementById("regMathDays").value;
+            let daysStr = "화목";
+            if(daysVal === 'mwf') daysStr = "월수금";
+            else if(daysVal === 'mw') daysStr = "월수";
+            
             const startT = document.getElementById("regMathStartTime").value;
             const durMin = document.getElementById("regMathDuration").value;
             let parts = startT.split(":");
