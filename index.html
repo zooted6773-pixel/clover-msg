@@ -233,26 +233,24 @@
                 <label class="text-xs font-bold text-slate-500 ml-1">수업반 (과학 중등)</label>
                 <select id="sciMidClass" class="w-full px-4 py-2.5 bg-indigo-50 border border-indigo-100 rounded-lg outline-none text-sm">
                     <option value="">수업반 선택</option>
-                    <optgroup label="하이탑">
-                        <option value="하이탑 (월 5:00~7:20)">하이탑 (월 5:00~7:20)</option>
-                        <option value="하이탑 (목 7:40~10:00)">하이탑 (목 7:40~10:00)</option>
-                        <option value="하이탑 (토 10:00~12:20)">하이탑 (토 10:00~12:20)</option>
-                    </optgroup>
-                    <optgroup label="하이탑 심화">
-                        <option value="하이탑 심화 (수 5:00~7:20)">하이탑 심화 (수 5:00~7:20)</option>
-                        <option value="하이탑 심화 (금 7:40~10:00)">하이탑 심화 (금 7:40~10:00)</option>
-                    </optgroup>
-                    <optgroup label="중등 심화/내신">
-                        <option value="중1 심화 (목 5:00~7:20)">중1 심화 (목 5:00~7:20)</option>
-                        <option value="중1 심화 (토 1:00~3:20)">중1 심화 (토 1:00~3:20)</option>
-                        <option value="중2 내신 (목 7:40~10:00)">중2 내신 (목 7:40~10:00)</option>
-                        <option value="중2 내신 (토 10:00~12:20)">중2 내신 (토 10:00~12:20)</option>
-                        <option value="중3 내신 (토 16:00~18:20)">중3 내신 (토 4:00~6:20)</option>
-                    </optgroup>
+                    <optgroup label="하이탑"><option value="하이탑 (월 5:00~7:20)">하이탑 (월 5:00~7:20)</option><option value="하이탑 (목 7:40~10:00)">하이탑 (목 7:40~10:00)</option><option value="하이탑 (토 10:00~12:20)">하이탑 (토 10:00~12:20)</option></optgroup>
+                    <optgroup label="하이탑 심화"><option value="하이탑 심화 (수 5:00~7:20)">하이탑 심화 (수 5:00~7:20)</option><option value="하이탑 심화 (금 7:40~10:00)">하이탑 심화 (금 7:40~10:00)</option></optgroup>
+                    <optgroup label="중등 심화/내신"><option value="중1 심화 (목 5:00~7:20)">중1 심화 (목 5:00~7:20)</option><option value="중1 심화 (토 1:00~3:20)">중1 심화 (토 1:00~3:20)</option><option value="중2 내신 (목 7:40~10:00)">중2 내신 (목 7:40~10:00)</option><option value="중2 내신 (토 10:00~12:20)">중2 내신 (토 10:00~12:20)</option><option value="중3 내신 (토 16:00~18:20)">중3 내신 (토 4:00~6:20)</option></optgroup>
                 </select>
             </div>
 
-            <div id="math-class-box" class="space-y-1 md:col-span-2 hidden-field"><select id="mathSchedule" class="w-full px-4 py-2.5 bg-red-50 border border-red-100 rounded-lg outline-none text-sm"><option value="">선택</option><option value="월수금 3시">월수금 3시</option><option value="월수금 5시">월수금 5시</option><option value="월수금 7시 40분">월수금 7시 40분</option><option value="화목 3시">화목 3시</option><option value="화목 6시">화목 6시</option><option value="토요일 10시">토요일 10시</option><option value="토요일 2시">토요일 2시</option></select></div>
+            <div id="math-class-box" class="space-y-1 md:col-span-2 hidden-field">
+                <select id="mathSchedule" class="w-full px-4 py-2.5 bg-red-50 border border-red-100 rounded-lg outline-none text-sm">
+                    <option value="">선택</option>
+                    <option value="월수금 3시">월수금 3시</option>
+                    <option value="월수금 5시">월수금 5시</option>
+                    <option value="월수금 7시 40분">월수금 7시 40분</option>
+                    <option value="월수 3시">월수 3시</option> <option value="화목 3시">화목 3시</option>
+                    <option value="화목 6시">화목 6시</option>
+                    <option value="토요일 10시">토요일 10시</option>
+                    <option value="토요일 2시">토요일 2시</option>
+                </select>
+            </div>
             
             <div class="md:col-span-2" id="sci-teacher-box"><select id="sciTeacher" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm"><option value="오승준">오승준 선생님</option><option value="서은혜">서은혜 선생님</option><option value="유지연">유지연 선생님</option><option value="김반석">김반석 선생님</option></select></div>
             
@@ -265,7 +263,7 @@
                     <option value="홍명기">홍명기 선생님</option>
                     <option value="이준희">이준희 선생님</option>
                     <option value="김경선">김경선 선생님</option>
-                </select>
+                    <option value="이미경">이미경 선생님</option> </select>
             </div>
             
             <div class="md:col-span-2 space-y-2"><div class="bg-slate-50 border border-slate-200 rounded-xl p-4"><div class="calendar-inner-container"><div class="flex justify-between items-center mb-3 px-1"><button onclick="changeMonth(-1)" class="text-xs w-8 h-8 rounded-full">◀</button><h3 id="calendarTitle" class="font-bold text-sm">2026년 1월</h3><button onclick="changeMonth(1)" class="text-xs w-8 h-8 rounded-full">▶</button></div><div class="calendar-grid" id="calendarDays"></div></div></div></div>
@@ -285,7 +283,6 @@
         </div>
         <button onclick="generateAbsenceMsg()" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg transition-all mb-6 text-sm">결석 양식 생성하기</button>
         <div class="mt-4 border-t pt-6"><div id="output" class="p-5 bg-slate-50 border border-slate-200 rounded-xl whitespace-pre-wrap text-slate-800 text-sm font-medium leading-relaxed min-h-[120px]"></div></div>
-        
         <button onclick="copyContent()" class="w-full mt-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm flex items-center justify-center gap-2">📋 문자 복사하기</button>
     </div>
 
@@ -615,6 +612,7 @@ ex. 초은초김영수신한
         renderCalendar();
     }
 
+    // [수정] 주차 표시 제거 (날짜만 출력)
     function updateDateDisplay() {
         const display = document.getElementById('selectedDatesDisplay');
         if (selectedDates.length === 0) { display.innerHTML = '<span class="text-slate-400 italic">달력에서 날짜를 클릭하세요.</span>'; return; }
@@ -626,17 +624,13 @@ ex. 초은초김영수신한
         renderCalendar();
     }
 
+    // [수정] 주차 표시 제거 로직
     function getAcademicWeek(dateStr) {
         const d = new Date(dateStr);
         const m = d.getMonth() + 1;
         const day = d.getDate();
         const weekDay = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
-        let firstFriday = 1;
-        while (new Date(d.getFullYear(), d.getMonth(), firstFriday).getDay() !== 5) firstFriday++;
-        let countFridays = 0;
-        for (let i = 1; i <= day; i++) if (new Date(d.getFullYear(), d.getMonth(), i).getDay() === 5) countFridays++;
-        const finalWeek = (day < firstFriday) ? 1 : countFridays + (firstFriday === 1 ? 0 : 1);
-        return `${m}/${day}(${weekDay}) ${finalWeek}주차`;
+        return `${m}/${day}(${weekDay})`;
     }
 
     function generateAbsenceMsg() {
